@@ -6,15 +6,22 @@ import os
 import asyncio
 from thousand_words import thousand_words as sp
 
+try:
+    # load the environment variables
+    load_dotenv()
+    api_id = os.getenv("api_id")
+    api_hash = os.getenv("api_hash")
+    bot_token = os.getenv("bot_token")
+    chat_: int = os.getenv("spam_chat_id")
+    my_id: int = os.getenv("my_id")
+except:
+    # load variables from config.py
+    from config import api_id, api_hash, bot_token, app, chat_, my_id
 
-# load the environment variables
-load_dotenv()
-api_id = os.getenv("api_id")
-api_hash = os.getenv("api_hash")
-bot_token = os.getenv("bot_token")
+
+# initiate the client object
 app = Client(name='my_account', api_id=api_id, api_hash=api_hash)
-chat_: int = os.getenv("spam_chat_id")
-my_id: int = os.getenv("my_id")
+
 
 
 # the infos dictionary
