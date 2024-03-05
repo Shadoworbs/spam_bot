@@ -20,20 +20,7 @@ thousand_words = ['a','aa', 'aah', 'aahed', 'aahing', 'aahs', 'aal', 'aalii', 'a
 
 
 
-change_first_word = thousand_words[0] = 'hello'
 
-five_words = thousand_words[:5]
-# 
-# print(five_words)
-
-
-print("hello")
-
-console.log("hello")
-
-system.println("hello")
-
-sysout.stdout.prntln("hello")
 
 
 
