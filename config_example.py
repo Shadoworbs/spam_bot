@@ -10,3 +10,4 @@ my_id = "" # your telegram id
 
 ########### optional variables ################
 messages_to_send = 20    # number of message to send. default is 20 max is 1,000
+

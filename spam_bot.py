@@ -50,11 +50,15 @@ completed: list = []
 # Starting the bot
 @app.on_message(filters.text, filters.group)
 async def startCommand(app, message):
+    userId = message.from_user.id
+    chatId = message.chat.id
+    _message = message.text
+
     global infos
     # if the message is sent in the specified chat and by the specified user and is the start command
-    if (message.chat.id == int(spam_chat_id) 
-        and message.from_user.id == int(my_id)
-        and message.text == "/start@spam_bot"):
+    if (chatId == int(spam_chat_id) 
+        and userId == int(my_id)
+        and _message == "/start@spam_bot"):
         # send a reply
         reply = await message.reply("Yes sir 🫡")
         # print a message to the console
@@ -72,8 +76,8 @@ async def startCommand(app, message):
                 # delay for 7 seconds
                 await asyncio.sleep(7)
                 # send one word from the list
-                repl = await app.send_message(spam_chat_id, 
-                                              word, 
+                repl = await app.send_message(chatId,
+                                              word,
                                               reply_to_message_id=message.id)
                 # delay for 3 seconds
                 await asyncio.sleep(2)
@@ -116,7 +120,7 @@ async def startCommand(app, message):
             msg = f"**Task completed ✅**"
             msg += f"\n**By:** {message.from_user.mention}"
             msg += f"\n**Total messages sent💬:** `{len(sp) * len(completed)}`✨"
-            await app.send_message(spam_chat_id, msg)
+            await app.send_message(chatId, msg)
             # delete the reply message
             await reply.delete()
             # delete the command message
@@ -135,9 +139,9 @@ async def startCommand(app, message):
             return
         
     # if the user is not me and the message is sent in the specified chat
-    if (message.from_user.id != int(my_id) 
-          and message.chat.id == int(spam_chat_id)
-          and message.text == "/start@spam_bot"
+    elif (userId != int(my_id)
+          and chatId == int(spam_chat_id)
+          and _message == "/start@spam_bot"
           ):
         # send a reply to the user
         msg = await app.send_message(spam_chat_id,
@@ -150,18 +154,25 @@ async def startCommand(app, message):
 
 
 # Get bot task status
-@app.on_message(filters.command('stats'), filters.group)
+@app.on_message(filters.text, filters.group)
 async def statusCommand(app, message):
+    userId = message.from_user.id
+    chatId = message.chat.id
+    _message = message.text
+    mention = message.from_user.mention
+
     global infos
     # if the user sends the stats command
-    if message.from_user.id == int(my_id) and message.chat.id == int(spam_chat_id):
+    if (userId == int(my_id) 
+        and chatId == int(spam_chat_id)
+        and _message == "/stats"):
         # if there are tasks running (infos dict is not empty)
         if len(infos) > 0 and infos["messages_left"] > 0 :
             await message.delete()
             # print a message to the console
             print(f"Current task ID: {infos['reply']}")
             # send a reply
-            task = await app.send_message(spam_chat_id, 
+            task = await app.send_message(chatId, 
                                           f"**[Current task ID ✍️]{infos['reply']})**",
                                           reply_to_message_id=infos["reply"],
                                           disable_web_page_preview=True)
@@ -184,12 +195,12 @@ async def statusCommand(app, message):
         # stop the function and start listening for a new command
 
     # if the user is not me and the message is sent in the specified chat
-    if (message.from_user.id != int(my_id) 
-          and message.chat.id == int(spam_chat_id) 
-          and message.text == "/stats"
+    if (userId != int(my_id) 
+          and chatId == int(spam_chat_id) 
+          and _message == "/stats"
           ):
         # send a reply to the user
-        msg = f"Hey {message.from_user.mention}\nSorry, you can't see my stats 📈."
+        msg = f"Hey {mention}\nSorry, you can't see my stats 📈."
         msg_ = await message.reply(msg)
         # delete the reply sent to the user
         await msg_.delete()
@@ -198,15 +209,20 @@ async def statusCommand(app, message):
 # Stop the bot
 @app.on_message(filters.text, filters.group)
 async def stopCommand(app, message):
+    userId = message.from_user.id
+    chatId = message.chat.id
+    _message = message.text
+    mention = message.from_user.mention
+
     global infos
     # if the admin sends the stop command
-    if (message.from_user.id == int(my_id) 
-        and message.chat.id == int(spam_chat_id)
-        and message.text == "/stop@spam_bot"):
+    if (userId == int(my_id) 
+        and chatId == int(spam_chat_id)
+        and _message == "/stop@spam_bot"):
         # print a message to the console
         print("\nTask stopped")
         # send a reply that the bot is stopped
-        stopped = await message.reply(f"Bot Stopped by {message.from_user.mention}")
+        stopped = await message.reply(f"Bot Stopped by {mention}")
         # wait for 1 second
         await asyncio.sleep(1)
         # delete the user's message
@@ -219,18 +235,21 @@ async def stopCommand(app, message):
             # delete the reply message to deliberately
             # to cause an error in edit message
             # that's the only way to stop the task
-            await app.delete_messages(spam_chat_id, infos["reply"])
+            await app.delete_messages(chatId, infos["reply"])
         except:
             pass
         return
 
     # if the user is not me and the message is sent in the specified chat
-    elif message.from_user.id != int(my_id) and message.chat.id == int(spam_chat_id) and '/stop@spam_bot' in message.text:
+    elif (userId != int(my_id) 
+          and chatId == int(spam_chat_id) 
+          and _message == "/stop@spam_bot"
+          ):
         # delete the user's message
         await message.delete()
         # send a reply to the user
-        msg = await app.send_message(spam_chat_id,
-                                     f"Hey {message.from_user.mention}\nSorry, you can't stop me 🤭.")
+        msg = await app.send_message(chatId,
+                                     f"Hey {mention}\nSorry, you can't stop me 🤭.")
         # wait for 5 seconds
         await asyncio.sleep(5)
         # delete the reply sent to the user
