@@ -30,7 +30,6 @@ except:
 msg_num = number_of_messages_to_send
 # decide how many messages to send per task based on variables from config.py
 if (msg_num is not None
-    and msg_num.isdigit()
     and int(msg_num) > 0
     and int(msg_num) <= len(sp)
     ):
