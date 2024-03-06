@@ -24,11 +24,12 @@ except:
         bot_token = os.getenv("bot_token")
         spam_chat_id: int = os.getenv("spam_chat_id")
         my_id: int = os.getenv("my_id")
-        msg_num = os.getenv("number_of_messages_to_send")
-    
+        number_of_messages_to_send = os.getenv("number_of_messages_to_send")
 
+
+msg_num = number_of_messages_to_send
 # decide how many messages to send per task based on variables from config.py
-if (number_of_messages_to_send is not None
+if (msg_num is not None
     and msg_num.isdigit()
     and int(msg_num) > 0
     and int(msg_num) <= len(sp)
