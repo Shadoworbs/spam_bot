@@ -8,25 +8,27 @@ from words import thousand_words as sp
 
 
 try:
-    # load the environment variables
-    load_dotenv()
-    api_id = os.getenv("api_id")
-    api_hash = os.getenv("api_hash")
-    bot_token = os.getenv("bot_token")
-    spam_chat_id: int = os.getenv("spam_chat_id")
-    my_id: int = os.getenv("my_id")
-    msg_num = os.getenv("number_of_messages_to_send")
-except:
     # load variables from config.py
-    from config import (api_id, 
+    if os.path.exists("config.py"):
+        from config import (api_id, 
                         api_hash,
                         spam_chat_id,
                         my_id, 
-                        msg_num)
-
+                        number_of_messages_to_send)
+except:
+    # load the environment variables
+    if os.path.exists(".env"):
+        load_dotenv()
+        api_id = os.getenv("api_id")
+        api_hash = os.getenv("api_hash")
+        bot_token = os.getenv("bot_token")
+        spam_chat_id: int = os.getenv("spam_chat_id")
+        my_id: int = os.getenv("my_id")
+        msg_num = os.getenv("number_of_messages_to_send")
+    
 
 # decide how many messages to send per task based on variables from config.py
-if (msg_num is not None
+if (number_of_messages_to_send is not None
     and msg_num.isdigit()
     and int(msg_num) > 0
     and int(msg_num) <= len(sp)
