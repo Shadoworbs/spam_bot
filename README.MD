@@ -15,7 +15,9 @@ Rename `config_example.py` to `config.py`
 
 Open config.py and fill in `API_ID`, `API_HASH`, `MY_ID`, `SPAM_GROUP_ID` with acutual values. Read help.txt for more info.
 
-Run `python spam_bot.py` to start the bot. You will have to provide your phone number and authenticate.
+Run `python init.py` You will have to provide your phone number and authenticate.
+
+Run `python spam_bot.py` to start the bot. 
 
 [Contact me on telegram][Telegram link to shadoworbs]
 
