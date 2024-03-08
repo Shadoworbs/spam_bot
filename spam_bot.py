@@ -1,5 +1,6 @@
 # import the necessary modules
 from datetime import datetime
+from re import escape
 from pyrogram import Client, filters
 from dotenv import load_dotenv
 import os
@@ -28,8 +29,8 @@ except:
         number_of_messages_to_send = os.getenv("number_of_messages_to_send")
 
 
-msg_num = number_of_messages_to_send
 # decide how many messages to send per task based on variables from config.py
+msg_num = number_of_messages_to_send
 if (msg_num is not None
     and int(msg_num) > 0
     and int(msg_num) <= len(sp)
@@ -50,7 +51,7 @@ infos = dict()
 completed: list = []
 
 
-###########################
+# load previous infos from a json file
 if os.path.exists("infos.json"):
     try:
         with open("infos.json", "r") as f:
@@ -65,8 +66,10 @@ async def startCommand(app, message):
     userId = message.from_user.id
     chatId = message.chat.id
     _message = message.text
+    msgId: int = message.id
 
     global infos
+    global prev_infos
     # if the message is sent in the specified chat and by the specified user and is the start command
     if (chatId == int(spam_chat_id) 
         and userId == int(my_id)):
@@ -104,7 +107,18 @@ async def startCommand(app, message):
                 # send one word from the list
                 random_word = await app.send_message(chatId,
                                               word,
-                                              reply_to_message_id=message.id)
+                                              reply_to_message_id=msgId-100)
+                # create an updated infos dict
+                updated_infos = {"messages_left": messages_left,
+                                 "messages_sent": messages_sent,
+                                 "status_msg_id": status_msg.id,
+                                 "command": message.id,
+                                 "msg_id": random_word.id}
+                # update the infos dict the newly created dict
+                infos.update(updated_infos)
+                # save the updated infos into a json file
+                with open("infos.json", "w") as f:
+                    json.dump(updated_infos, f, indent=3)
                 # delay for 3 seconds
                 await asyncio.sleep(2)
                 # decrease the number of messages left by 1
@@ -119,23 +133,12 @@ async def startCommand(app, message):
                 hours, minutes = divmod(minutes, 60)
                 days, hours = divmod(hours, 24)
                 eta_ = f"{hours}h {minutes}m {seconds}s"
-                # create an updated infos dict
-                updated_infos = {"messages_left": messages_left,
-                                 "messages_sent": messages_sent,
-                                 "status_msg_id": status_msg.id,
-                                 "command": message.id,
-                                 "msg_id": random_word.id}
-                # update the infos dict the newly created dict
-                infos.update(updated_infos)
-                # save the updated infos into a json file
-                with open("infos.json", "w") as f:
-                    json.dump(updated_infos, f, indent=3)
                 # edit the reply message with some text
-                msg = f"**Total messages 💬:** `{len(sp):,}`"
-                msg += f"\n**Messages sent 💬:** `{messages_sent:,}`"
-                msg += f"\n**Messages left 💬:** `{messages_left:,}`"
-                msg += f"\n**Time left ⏳:** `{eta_}`"
-                msg += f"\n**Made with ❤️ by:** @shadoworbs"
+                msg = f"**Total  💬 :** `{len(sp):,}`"
+                msg += f"\n**Sent ✅    :** `{messages_sent:,}`"
+                msg += f"\n**Left ♻️    :** `{messages_left:,}`"
+                msg += f"\n**ETA ⏳     :** `{eta_}`\n\n"
+                msg += f"**<\> with ❤️ by : @shadoworbs**"
                 await status_msg.edit(msg, disable_web_page_preview=True)
                 # print messages left
                 print(f'{messages_left} messages left', end='\r')
@@ -163,24 +166,9 @@ async def startCommand(app, message):
             # when there is an error in edit message
             # delete the current word sent
             # (may not work because the word may have been deleted already)
-            await random_word.delete()
+            await random_word.delete() 
             # clear the infos dict to show no tasks running
             infos.clear()
-            # return the function and start listening for a new command
-            return
-        
-    # if the user is not me and the message is sent in the specified chat
-    elif (userId != int(my_id)
-          and chatId == int(spam_chat_id)):
-        # send a reply to the user
-        msg = f"Hey {message.from_user.mention}\nSorry, you can't start me 🤭."
-        msg_ = await app.send_message(chatId,
-                                     msg,
-                                     reply_to_message_id=message.id)
-        # wait for 10 seconds
-        await asyncio.sleep(10)
-        # delete the reply sent to the user
-        await msg_.delete()
 
 
 # Get bot task status
@@ -227,17 +215,7 @@ async def statusCommand(app, message):
             await asyncio.sleep(5)
             # delete the reply
             await task.delete()
-        # stop the function and start listening for a new command
 
-    # if the user is not me and the message is sent in the specified chat
-    elif (userId != int(my_id) 
-          and chatId == int(spam_chat_id)
-          ):
-        # send a reply to the user
-        msg = f"Hey {mention}\nSorry, you can't see my stats 📈."
-        msg_ = await message.reply(msg)
-        # delete the reply sent to the user
-        await msg_.delete()
 
 
 # Stop the bot
@@ -256,7 +234,7 @@ async def stopCommand(app, message):
         # print a message to the console
         print("\nTask stopped")
         # send a reply that the bot is stopped
-        stopped = await message.reply(f"Bot Stopped by {mention}")
+        stopped = await message.reply(f"Bot Stopped by **{mention}**")
         # wait for 1 second
         await asyncio.sleep(1)
         # delete the user's message
@@ -277,22 +255,7 @@ async def stopCommand(app, message):
         except:
             pass
 
-    # if the user is not me and the message is sent in the specified chat
-    elif (userId != int(my_id) 
-          and chatId == int(spam_chat_id)
-          ):
-        # delete the user's message
-        await message.delete()
-        # send a reply to the user
-        msg = f"Hey {mention}\nSorry, you can't stop me 🤭."
-        msg_ = await app.send_message(chatId,
-                                     msg)
-        # wait for 5 seconds
-        await asyncio.sleep(5)
-        # delete the reply sent to the user
-        await msg_.delete()
-    # stop the function and start listening for a new command
-    return
+
 
 
 print(f"\n[+] Bot Started at {datetime.now().strftime('%H:%M:%S')}\n")
