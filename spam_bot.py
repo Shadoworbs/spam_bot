@@ -1,6 +1,5 @@
 # import the necessary modules
 from datetime import datetime
-from re import escape
 from pyrogram import Client, filters
 from dotenv import load_dotenv
 import os
@@ -87,15 +86,9 @@ async def startCommand(app, message):
         # try to delete previeous messages and commands
         if len(prev_infos) > 0:
             try:
-                await app.delete_messages(chatId, prev_infos["msg_id"])
-            except:
-                pass
-            try:
-                await app.delete_messages(chatId, prev_infos["command"])
-            except:
-                pass
-            try:
-                await app.delete_messages(chatId, prev_infos["status_msg_id"])
+                await app.delete_messages(chatId, [prev_infos["msg_id"],
+                                                  prev_infos["command"],
+                                                  prev_infos["status_msg_id"]])
             except:
                 pass
 
