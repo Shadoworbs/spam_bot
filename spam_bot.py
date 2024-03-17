@@ -67,7 +67,7 @@ async def startCommand(app, message):
     userId = message.from_user.id
     chatId = message.chat.id
     _message = message.text
-    msgId: int = message.id
+    command_msg: int = message.id
 
     global infos
     global prev_infos
@@ -85,6 +85,10 @@ async def startCommand(app, message):
         # estimated time of completion
         eta = messages_left * 10
 
+        # create a new infos dict
+        infos["command"] = command_msg
+        infos["status_msg_id"] = status_msg.id
+
         # try to delete previeous messages and commands
         if len(prev_infos) > 0:
             try:
@@ -93,33 +97,32 @@ async def startCommand(app, message):
                                                   prev_infos["status_msg_id"]])
             except:
                 pass
+        
 
         try:
             # loop through the list of words in ../spam.py
             for word in sp:
                 # delay for 7 seconds
                 await asyncio.sleep(7)
-                # send one word from the list if the condition below is met
+                # send one word from the list as a reply to the message ID provided
                 if (msg_id
                     and msg_id is not None
-                    and msg_id.isdigit()):
+                    and msg_id > 0
+                    ):
                     random_word = await app.send_message(chatId,
                                               word,
                                               reply_to_message_id=msg_id)
                 # else, don't reply to any message.
                 else:
                     random_word = await app.send_message(chatId, word)
-                # create an updated infos dict
-                updated_infos = {"messages_left": messages_left,
-                                 "messages_sent": messages_sent,
-                                 "status_msg_id": status_msg.id,
-                                 "command": message.id,
-                                 "msg_id": random_word.id}
-                # update the infos dict the newly created dict
-                infos.update(updated_infos)
+                # update the infos dict
+                infos["messages_left"] = messages_left
+                infos["messages_sent"] = messages_sent
+                infos["status_msg_id"] = status_msg.id
+
                 # save the updated infos into a json file
                 with open("infos.json", "w") as f:
-                    json.dump(updated_infos, f, indent=3)
+                    json.dump(infos, f, indent=3)
                 # delay for 3 seconds
                 await asyncio.sleep(2)
                 # decrease the number of messages left by 1
