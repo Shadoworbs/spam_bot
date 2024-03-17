@@ -15,7 +15,8 @@ try:
                         api_hash,
                         spam_chat_id,
                         my_id, 
-                        number_of_messages_to_send)
+                        number_of_messages_to_send,
+                        message_id_to_reply_to as msg_id)
 except:
     # load the environment variables
     if os.path.exists(".env"):
@@ -26,6 +27,7 @@ except:
         spam_chat_id: int = os.getenv("spam_chat_id")
         my_id: int = os.getenv("my_id")
         number_of_messages_to_send = os.getenv("number_of_messages_to_send")
+        msg_id: int = os.getenv("message_id_to_reply_to")
 
 
 # decide how many messages to send per task based on variables from config.py
@@ -97,10 +99,16 @@ async def startCommand(app, message):
             for word in sp:
                 # delay for 7 seconds
                 await asyncio.sleep(7)
-                # send one word from the list
-                random_word = await app.send_message(chatId,
+                # send one word from the list if the condition below is met
+                if (msg_id
+                    and msg_id is not None
+                    and msg_id.isdigit()):
+                    random_word = await app.send_message(chatId,
                                               word,
-                                              reply_to_message_id=msgId-100)
+                                              reply_to_message_id=msg_id)
+                # else, don't reply to any message.
+                else:
+                    random_word = await app.send_message(chatId, word)
                 # create an updated infos dict
                 updated_infos = {"messages_left": messages_left,
                                  "messages_sent": messages_sent,
