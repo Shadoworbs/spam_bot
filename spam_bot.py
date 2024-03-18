@@ -203,7 +203,7 @@ async def statusCommand(app, message):
                                           msg,
                                           disable_web_page_preview=True)
             # wait for 10 seconds
-            await asyncio.sleep(30)
+            await asyncio.sleep(10)
             # delete the reply sent to the user
             await task.delete()
 
