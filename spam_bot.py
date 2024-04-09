@@ -1,39 +1,30 @@
 # import the necessary modules
 from datetime import datetime
 from pyrogram import Client, filters
-from dotenv import load_dotenv
 import os
 import asyncio
 from words import thousand_words as sp
 import json
 
-try:
-    # load variables from config.py
-    if os.path.exists("config.py"):
-        from config import (
-            api_id,
-            api_hash,
-            spam_chat_id,
-            my_id,
-            number_of_messages_to_send,
-            message_id_to_reply_to as msg_id,
-        )
-except:
-    # load the environment variables
-    if os.path.exists(".env"):
-        load_dotenv()
-        api_id = os.getenv("api_id")
-        api_hash = os.getenv("api_hash")
-        bot_token = os.getenv("bot_token")
-        spam_chat_id: int = os.getenv("spam_chat_id")
-        my_id: int = os.getenv("my_id")
-        number_of_messages_to_send = os.getenv("number_of_messages_to_send")
-        msg_id: int = os.getenv("message_id_to_reply_to")
+# load variables from config.py
+if os.path.exists("config.py"):
+    from config import (
+        api_id,
+        api_hash,
+        spam_chat_id,
+        my_id,
+        number_of_messages_to_send,
+        message_id_to_reply_to as msg_id,
+    )
+
 
 
 # decide how many messages to send per task based on variables from config.py
 msg_num = number_of_messages_to_send
-if msg_num is not None and int(msg_num) > 0 and int(msg_num) <= len(sp):
+if (msg_num is not None 
+    and int(msg_num) > 0
+    and int(msg_num) <= len(sp)
+    ):
     msg_num = int(msg_num)
     sp = sp[:msg_num]
 else:
