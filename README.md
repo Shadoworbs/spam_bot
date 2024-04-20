@@ -13,7 +13,7 @@ Open folder: ```cd spam-bot```
 
 Rename `config_example.py` to `config.py`
 
-Open config.py and fill in `API_ID`, `API_HASH`, `MY_ID`, `SPAM_GROUP_ID` with acutual values. Read help.txt for more info.
+Open config.py and fill in `API_ID`, `API_HASH`, `MY_ID`, `SPAM_GROUP_ID` with acutual values from [This site](https://my.telegram.org).
 
 Run `python init.py` You will have to provide your phone number and authenticate.
 
