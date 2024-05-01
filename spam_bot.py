@@ -22,8 +22,7 @@ if os.path.exists("config.py"):
 # decide how many messages to send per task based on variables from config.py
 msg_num = number_of_messages_to_send
 if (msg_num is not None 
-    and int(msg_num) > 0
-    and int(msg_num) <= len(sp)
+    and 0 < int(msg_num) <= len(sp)
     ):
     msg_num = int(msg_num)
     sp = sp[:msg_num]
@@ -281,10 +280,10 @@ async def _continue(app, message):
         print("Continuing from where we left off.")
         await startCommand(app=app, message=message, sp_=_sp)
     else:
-        # await startCommand(app=app, message=message, sp_=sp)
-        task_done = await app.send_message(chat_id=chatId, 
+        await message.delete()
+        task_done = await app.send_message(chat_id=chatId,
                                text="The last task was done!\nUse /spam to start again.")
-        await asyncio.sleep(10)
+        await asyncio.sleep(20)
         await task_done.delete()
      
 
@@ -294,4 +293,4 @@ app.run()
 
 
 # TODO:
-#
+# All done
