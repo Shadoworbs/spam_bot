@@ -6,6 +6,7 @@ import asyncio
 from words import thousand_words as sp
 import json
 
+
 # load variables from config.py
 if os.path.exists("config.py"):
     from config import (
@@ -14,16 +15,14 @@ if os.path.exists("config.py"):
         spam_chat_id,
         my_id,
         number_of_messages_to_send,
-        message_id_to_reply_to as msg_id,
+        message_id_to_reply_to as msg_id
     )
-
 
 
 # decide how many messages to send per task based on variables from config.py
 msg_num = number_of_messages_to_send
 if (msg_num is not None 
-    and int(msg_num) > 0
-    and int(msg_num) <= len(sp)
+    and 0 < int(msg_num) <= len(sp)
     ):
     msg_num = int(msg_num)
     sp = sp[:msg_num]
@@ -36,7 +35,7 @@ app = Client(name="my_account", api_id=api_id, api_hash=api_hash)
 
 
 # the infos dictionary
-infos = dict()
+infos = {}
 # the list of completed tasks
 completed: list = []
 
@@ -46,26 +45,28 @@ if os.path.exists("infos.json"):
     try:
         with open("infos.json", "r") as f:
             prev_infos = json.load(f)
-    except:
+    except Exception as e:
+        print(e)
         pass
 
 
 # Starting the bot
-@app.on_message(filters.command("start@spam_bot"))
+@app.on_message(filters.command("spam"))
 async def startCommand(app, message, sp_=sp):
     userId = message.from_user.id
     chatId = message.chat.id
     _message = message.text
     command_msg: int = message.id
 
-    global infos
+    global infos, msg_num
     global prev_infos
 
+    # inquire_messages_index = await app.send_message(chatId, 'How many messages do you want to send?')
 
     # if the message is sent in the specified chat and by the specified user and is the start command
     if chatId == int(spam_chat_id) and userId == int(my_id):
         # send a reply
-        status_msg = await message.reply("Yes sir 🫡")
+        status_msg = await message.reply("Yes sir 🫡\nInitiating **Violence Mode 😈**")
         # print a message to the console
         print("Task Started!")
         # messages left
@@ -78,10 +79,11 @@ async def startCommand(app, message, sp_=sp):
         # create a new infos dict
         infos["command"] = command_msg
         infos["status_msg_id"] = status_msg.id
+        infos["total_messages"] = msg_num
         # set the state to not done
         infos["Done"] = False
 
-        # try to delete previeous messages and commands
+        # try to delete previous messages and commands
         if len(prev_infos) > 0:
             try:
                 await app.delete_messages(
@@ -92,15 +94,16 @@ async def startCommand(app, message, sp_=sp):
                         prev_infos["status_msg_id"],
                     ],
                 )
-            except:
+            except Exception as a:
+                print(a)
                 pass
         try:
             # loop through the list of words in ../spam.py
             for word in sp_:
-                # delay for 7 seconds
-                await asyncio.sleep(7)
                 # send one word from the list as a reply to the message ID provided
                 if msg_id and msg_id is not None and msg_id > 0:
+                    # delay for 7 seconds
+                    await asyncio.sleep(7)
                     random_word = await app.send_message(
                         chatId, word, reply_to_message_id=msg_id
                     )
@@ -112,8 +115,8 @@ async def startCommand(app, message, sp_=sp):
                 infos["random_word_id"] = random_word.id
 
                 # save the updated infos into a json file
-                with open("infos.json", "w") as f:
-                    json.dump(infos, f, indent=3)
+                with open("infos.json", "w") as j:
+                    json.dump(infos, j, indent=3)
                 # delay for 3 seconds
                 await asyncio.sleep(2)
                 # decrease the number of messages left by 1
@@ -136,7 +139,7 @@ async def startCommand(app, message, sp_=sp):
                 msg += f"\n**Sent ✅    :** `{messages_sent:,}`"
                 msg += f"\n**Left ♻️    :** `{messages_left:,}`"
                 msg += f"\n**ETA ⏳     :** `{eta_}`\n\n"
-                msg += f"**<\> with ❤️ by : @shadoworbs**"
+                msg += f"**Cooked with ❤️ by : @shadoworbs**"
                 await status_msg.edit(msg, disable_web_page_preview=True)
                 # print messages left
                 print(f"{messages_left} messages left", end="\r")
@@ -150,21 +153,21 @@ async def startCommand(app, message, sp_=sp):
             print(f"Task Completed {len(completed)} times. | Time: {datetime.now().strftime('%I:%M %p')}")
             # send a complete message
             msg = f"**Task completed ✅**"
-            msg += f"\n**Messages sent💬:** <code>{len(sp) * len(completed)}</code>✨"
+            msg += f"\n**Messages sent today 💬:** <code>{len(sp) * len(completed)}</code>✨"
             complete = await app.send_message(chatId, msg)
             # change the state to Done
             infos["Done"] = True
             # save the updated infos into a json file
-            with open("infos.json", "w") as f:
-                json.dump(infos, f, indent=3)
+            with open("infos.json", "w") as f1:
+                json.dump(infos, f1, indent=3)
             # delete the reply message
             await status_msg.delete()
             # delete the command message
             await message.delete()
             await asyncio.sleep(20)
             await complete.delete()
-        except Exception as e:
-            print(e)
+        except Exception as e1:
+            print(e1)
             # when there is an error in edit message
             # delete the current word sent
             # (may not work because the word may have been deleted already)
@@ -174,8 +177,8 @@ async def startCommand(app, message, sp_=sp):
 
 
 # Get bot task status
-@app.on_message(filters.command("status"))
-async def statusCommand(app, message):
+@app.on_message(filters.command("stats"))
+async def statusCommand(app: Client, message):
     userId = message.from_user.id
     chatId = message.chat.id
     _message = message.text
@@ -186,9 +189,11 @@ async def statusCommand(app, message):
     # if the user sends the stats command
     if userId == int(my_id) and chatId == int(spam_chat_id):
         # print a message to the console
-        print(f"\nUser  {message.from_user.id}  requested stats.")
+        print(f"\nUsername: {message.from_user.username} and ID: {message.from_user.id}  requested stats.")
         # if there are tasks running (infos dict is not empty)
-        if infos["Done"] == False:
+        if ("Done" in infos.keys()
+            and not infos['Done']
+            ):
             await message.delete()
             # print a message to the console
             print(f"Current task ID: {infos['status_msg_id']}")
@@ -208,7 +213,8 @@ async def statusCommand(app, message):
             await message.delete()
             # send a reply
             msg = f"**No tasks running!**"
-            task = await message.reply(msg)
+            msg += f"\nStart a new task with /spam"
+            task = await app.send_message(chatId, msg)
             # wait for 5 seconds
             await asyncio.sleep(5)
             # delete the reply
@@ -216,7 +222,7 @@ async def statusCommand(app, message):
 
 
 # Stop the bot
-@app.on_message(filters.command("stop@spam_bot"))
+@app.on_message(filters.command("stop"))
 async def stopCommand(app, message):
     userId = message.from_user.id
     chatId = message.chat.id
@@ -225,7 +231,7 @@ async def stopCommand(app, message):
     # access the global scope
     global infos
     # set the status to done
-    infos["Done"] = True
+    # infos["Done"] = True
     # if the admin sends the stop command
     if userId == int(my_id) and chatId == int(spam_chat_id):
         # print a message to the console
@@ -245,18 +251,20 @@ async def stopCommand(app, message):
             # to cause an error in edit message
             # that's the only way to stop the task
             await app.delete_messages(chatId, infos["status_msg_id"])
-        except:
+        except Exception as b:
+            print(b)
             pass
         try:
             await app.delete_messages(chatId, infos["command"])
-        except:
+        except Exception as c:
+            print(c)
             pass
 
 
 ############# Continue ##################
 @app.on_message(filters.command("continue"))
 async def _continue(app, message):
-    global sp
+    global sp, msg_num
     chatId = message.chat.id
 
     # load previous infos from a json file
@@ -264,28 +272,30 @@ async def _continue(app, message):
         try:
             with open("infos.json", "r") as f:
                 prev_infos = json.load(f)
-        except:
+        except Exception as d:
+            print(d)
             pass
 
     Done = prev_infos["Done"]
     mleft = prev_infos["messages_left"]
-    _sp = sp[:mleft]
+    msent = prev_infos["messages_sent"]
+    _sp = sp[msent:msg_num]
 
-    if (Done is False
-        and mleft > 0):
+    if not Done and mleft > 0:
+        print("Continuing from where we left off.")
         await startCommand(app=app, message=message, sp_=_sp)
     else:
-        # await startCommand(app=app, message=message, sp_=sp)
-        task_done = await app.send_message(chat_id=chatId, 
-                               text="The last task was done!\nUse /start@spam_bot to start again.")
-        await asyncio.sleep(10)
+        await message.delete()
+        task_done = await app.send_message(chat_id=chatId,
+                                           text="The last task was done!\nUse /spam to start again.")
+        await asyncio.sleep(20)
         await task_done.delete()
-     
+
 
 print(f"\n[+] Bot Started | {datetime.now().strftime('%A %B %d %Y - %I:%M %p')}\n")
 
 app.run()
 
 
-# todo:
-# ...
+# TODO:
+# implement code to multi thread the application.
