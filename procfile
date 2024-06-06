@@ -1,0 +1,1 @@
+worker: python spam_bot.py
