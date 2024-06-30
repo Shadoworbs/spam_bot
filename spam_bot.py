@@ -1,13 +1,16 @@
 # import the necessary modules
 from datetime import datetime
+from http import client
+import time
 from pyrogram import Client, filters
+from pyrogram.handlers import MessageHandler
+from pyrogram.types import Message
 import os
 import asyncio
+from config import CHAT_ID
 from helper.words import thousand_words as sp
 import sys
-from helper.functions import eta_converter, json_io, unauthorized
-
-
+from helper.functions import eta_converter, json_io
 
 
 # load variables from config.py
@@ -23,62 +26,69 @@ else:
 
 
 # initiate the client object
-app = Client(name="my_account", api_id=API_ID, api_hash=API_HASH)
-
-
-# create a json file and add time in it to prevent FileNotFoundErrors
-# json_io('w', {'date_time': datetime.now().strftime('%A %B %d %Y - %I:%M %p')})
+app:Client = Client(name="my_account", api_id=API_ID, api_hash=API_HASH)
 
 
 # load previous informatioin from infos.json
 prev_infos = json_io(mode='r')
 
+# commands and prefixes
+start_command_list = ['sp', 'spam']
+stop_command_list = ['st', 'stop', 'pause']
+status_command_list = ['stat', 'stats', 'status']
+continue_command_list = ['ct', 'cont', 'continue']
+reset_command_list = ['reset', 'clear', 'cl', 'clean']
+command_prefixes_list = ['.', '/', '!']
+
+
 
 ##################### Starting the bot ###########################
-@app.on_message(filters.command("spam") | filters.command('sp'))
-async def startCommand(app, message, word_list=sp, cont=False):
+# @app.on_message(filters.command(start_command_list, prefixes=command_prefixes_list))
+async def startCommand(app:Client, message:Message, word_list=sp, cont=False):
+
+    default_msgnum: int = 20
     userId = message.from_user.id
     chatId = message.chat.id
-    txt = message.text
-    # txt_strip = txt.strip()
-    # txt_split = txt.split(' ')
+    txt:str = message.text
     command_msg: int = message.id
-    # load previous information 
-    global prev_infos
-    # create a new infos dict to temporarily hold informatiion
-    infos = dict()
+    userName = message.from_user.username
+    name: str = str(message.from_user.first_name)
 
-
-    # check if the last task was completed
-    try:
-        if 'messages_left' and 'Done' in prev_infos.keys:
-            if prev_infos['messages_left'] > 0 and prev_infos['Done'] is not True and cont is False:
-                await message.delete()
-                await app.send_message(chatId, 'The last task did not complete. \nUse /continue to resume.')
-                print('Last task did not complete.')
-                return
-    except Exception as i:
-        print(f'Error occured in checking if last task was completed\n{i}')
-        pass
-
-
-
-
-    # if the command is not to continue
-    if cont is not True:
-        msg_num = int(txt.split(' ')[1]) if len(txt.split(' ')) > 1 else 20
-        word_list = sp[:msg_num]
-    # if the command is to continue
+    if userId != int(USER_ID):
+        unauthorized_user = await app.send_message(chatId, "Only @Shadoworbs can start a task.", reply_to_message_id=message.id)
+        print(f"\nAnauthorized user report\nUsername: {userName}\nUserId: {userId}\nName: {name}")
+        await asyncio.sleep(5000)
+        await unauthorized_user.delete()
     else:
-        msg_num = prev_infos['messages_left']
-        mleft = prev_infos["messages_left"]
-        msent = prev_infos["messages_sent"]
-        msg_num = prev_infos['total_messages']
-        word_list = sp[msent:msg_num]
+        # load previous information 
+        global prev_infos
+        # create a new infos dict to temporarily hold informatiion
+        infos = dict()
+        # check if the last task was completed
+        try:
+            if 'messages_left' and 'Done' in prev_infos.keys():
+                if prev_infos['messages_left'] > 0 and prev_infos['Done'] is not True and cont is False:
+                    await message.delete()
+                    await app.send_message(chatId, 'The last task did not complete. \nUse /continue to resume.')
+                    print('Last task did not complete.')
+                    return
+        except Exception as i:
+            print(f'Error occured in checking if last task was completed\n{i}')
+            pass
+        # if continue is false
+        if cont is not True:
+            msg_num = int(txt.split(' ')[1]) if len(txt.split(' ')) > 1 else 20
+            word_list = sp[:msg_num]
+
+        # if the command is to continue
+        else:
+            msg_num = prev_infos['messages_left']
+            mleft = prev_infos["messages_left"]
+            msent = prev_infos["messages_sent"]
+            msg_num = prev_infos['total_messages']
+            word_list = sp[msent:msg_num]
 
 
-    # if the message is sent by the specified user
-    if userId == int(USER_ID):
         # send a reply
         if not cont:
             status_msg = await message.reply("Yes sir 🫡\n**Initiating Violence Mode 😈**")
@@ -105,17 +115,16 @@ async def startCommand(app, message, word_list=sp, cont=False):
 
         # try to delete previous messages and commands
         if len(prev_infos) > 0:
-            msg_ids = 'command', 'start_msg_id', 'random_word_id'
+            msg_ids = ['command', 'start_msg_id', 'random_word_id']
             for id in msg_ids:
-                if id in prev_infos.keys():
+                if id not in prev_infos.keys():
+                    pass
+                else:
                     try:
-                        await app.delete_messages(chatId, id)
+                        await app.delete_messages(chat_id=chatId, message_ids=prev_infos[id])
                     except Exception as e:
                         print(f'Error in delete_messages()\n{e}')
-                        pass
-                else:
-                    print(f'KeyError: {id}')
-                    pass
+
         try:
             # loop through the list of words in ../spam.py
             for word in word_list:
@@ -126,7 +135,7 @@ async def startCommand(app, message, word_list=sp, cont=False):
                 else:
                     random_word = await app.send_message(chatId, word)
                 # update the infos dict
-                infos["status_msg_id"] = status_msg.id
+                infos["status_msg_id"] = status_msg.id  
                 infos["random_word_id"] = random_word.id
 
                 # save the updated infos into a json file
@@ -187,7 +196,7 @@ async def startCommand(app, message, word_list=sp, cont=False):
 
 
 ################################# Get bot task status ###############################
-@app.on_message(filters.command("stats") | filters.command('stat') | filters.command('status'))
+# @app.on_message(filters.command(status_command_list, prefixes=command_prefixes_list))
 async def statusCommand(app: Client, message):
     userId = message.from_user.id
     chatId = message.chat.id
@@ -207,7 +216,7 @@ async def statusCommand(app: Client, message):
             print(f"Current task ID: {infos['status_msg_id']}")
             # send a reply
             chat_ = str(chatId)[3:]
-            msg = '**Status: <i>running 🟢</i>**\n'
+            msg = '**Status:** <i>running 🟢</i>\n'
             msg += f"**[🔗 Task link 🔗](https://t.me/c/{chat_}/{infos['status_msg_id']})**"
             task = await app.send_message(chatId, msg, disable_web_page_preview=True)
             # wait for 10 seconds
@@ -221,7 +230,7 @@ async def statusCommand(app: Client, message):
             print("No tasks running!")
             await message.delete()
             # send a reply
-            msg = f"**Spam Status: <i>stopped 🛑</i>**"
+            msg = f"**Spam Status:** <i>stopped 🛑</i>"
             msg += f"\nStart a new task with /spam [n]"
             task = await app.send_message(chatId, msg)
             # wait for 5 seconds
@@ -237,7 +246,7 @@ async def statusCommand(app: Client, message):
 
 
 ######################### Stop the bot ############################
-@app.on_message(filters.command("stop") | filters.command('st'))
+# @app.on_message(filters.command(stop_command_list, prefixes=command_prefixes_list))
 async def stopCommand(app, message):
     userId = message.from_user.id
     chatId = message.chat.id
@@ -275,7 +284,7 @@ async def stopCommand(app, message):
 
 
 ############# Continue ##################
-@app.on_message(filters.command("continue") | filters.command('ct'))
+# @app.on_message(filters.command(continue_command_list, prefixes=command_prefixes_list))
 async def _continue(app, message):
     global sp
     chatId = message.chat.id
@@ -303,7 +312,7 @@ async def _continue(app, message):
 
 
 ################################## Clear infos.json ################################
-@app.on_message(filters.command('reset') | filters.command('cl'))
+# @app.on_message(filters.command(reset_command_list, prefixes=command_prefixes_list))
 async def reset_all_messages(app, message):
     chatId = message.chat.id
     userId = message.from_user.id
@@ -323,8 +332,20 @@ async def reset_all_messages(app, message):
 # print date to the console
 print(f"\n[+] Bot Started | {datetime.now().strftime('%A %B %d %Y - %I:%M %p')}\n")
 
+
+# register handlers for the commands
+app.add_handler(MessageHandler(startCommand, filters.command(start_command_list, command_prefixes_list)))
+app.add_handler(MessageHandler(stopCommand, filters.command(stop_command_list, command_prefixes_list)))
+app.add_handler(MessageHandler(statusCommand, filters.command(status_command_list, command_prefixes_list)))
+app.add_handler(MessageHandler(reset_all_messages, filters.command(reset_command_list, command_prefixes_list)))
+app.add_handler(MessageHandler(_continue, filters.command(continue_command_list, command_prefixes_list)))
+
+
+
 # run the bot
-app.run()
+
+if __name__ == '__main__':
+    app.run()
 
 
 # TODO:

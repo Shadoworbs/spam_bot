@@ -48,7 +48,7 @@ async def unauthorized(message):
     msg = 'Hahaha, got you 😂😂\n'
     msg += 'Chedk out my repo and host your own bot on your local maching at no cost.\n'
     msg += '**[Spam Bot Repo](https://github.com/shadoworbs/spam_bot)**\n'
-    msg += "Don't forget to fort and star the repo."
+    msg += "Don't forget to fork and star the repo."
     await message.reply(msg)
 
 

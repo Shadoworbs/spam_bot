@@ -15,3 +15,5 @@ async def echo(Client, message):
 
 print("\n[+] Bot Started!\n[+] Press Ctrl+C to stop the bot.")
 app.start()
+
+
